@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-app = FastAPI(title="Hunter Matchmaking API")
+app = FastAPI(title="Evolve Matchmaker API")
 
 
 @app.get("/health")

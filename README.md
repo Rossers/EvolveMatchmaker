@@ -1,6 +1,6 @@
 # EvolveMatchmaker
 
-A small Python backend service for matching 4 Hunters against 1 Monster.
+A Python backend service for matching 4 Hunters against 1 Monster.
 
 This project will be built with FastAPI, PostgreSQL, Docker, and pytest. It is designed as a portfolio-friendly backend project focused on API design, matchmaking logic, database transactions, and scalable service architecture to demonstrate my python knowledge, coding style, and API design.
 
