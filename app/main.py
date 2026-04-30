@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from app import models
 from app.database import Base, engine, wait_for_database, get_db
 from app.models import QueuedPlayer
-from app.schemas import QueuedPlayerResponse, QueueJoinRequest
+from app.schemas import QueuedPlayerResponse, QueueJoinRequest, QueueListResponse
 
 
 app = FastAPI(title="Evolve Matchmaker API")
@@ -52,3 +52,28 @@ def join_queue(request: QueueJoinRequest, db: Session = Depends(get_db)):
     db.refresh(queued_player)
 
     return queued_player
+
+
+@app.get("/queue", response_model=QueueListResponse)
+def get_queue(db: Session = Depends(get_db)):
+    queued_players = db.query(QueuedPlayer).order_by(QueuedPlayer.joined_at).all()
+
+    hunters = []
+    monsters = []
+
+    for player in queued_players:
+        response_player = QueuedPlayerResponse(
+            player_id=player.player_id,
+            role=player.role,
+            mmr=player.mmr,
+        )
+
+        if player.role == "hunter":
+            hunters.append(response_player)
+        elif player.role == "monster":
+            monsters.append(response_player)
+
+    return QueueListResponse(
+        hunters=hunters,
+        monsters=monsters,
+    )

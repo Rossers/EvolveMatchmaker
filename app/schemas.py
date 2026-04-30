@@ -11,3 +11,8 @@ class QueuedPlayerResponse(BaseModel):
     player_id: str
     role: str
     mmr: int
+
+
+class QueueListResponse(BaseModel):
+    hunters: list[QueuedPlayerResponse]
+    monsters: list[QueuedPlayerResponse]
