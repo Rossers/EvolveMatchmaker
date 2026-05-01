@@ -46,3 +46,23 @@ queue-join-monster-low:
 
 queue-fetch:
 	powershell -Command "Invoke-RestMethod -Uri http://localhost:8080/queue"
+
+queue-leave-1:
+	curl.exe -X POST http://localhost:8080/queue/leave \
+	  -H "Content-Type: application/json" \
+	  --data-binary @payloads/player_leave_1.json
+
+queue-leave-2:
+	curl.exe -X POST http://localhost:8080/queue/leave \
+	  -H "Content-Type: application/json" \
+	  --data-binary @payloads/player_leave_2.json
+
+queue-leave-3:
+	curl.exe -X POST http://localhost:8080/queue/leave \
+	  -H "Content-Type: application/json" \
+	  --data-binary @payloads/player_leave_3.json
+
+queue-leave-4:
+	curl.exe -X POST http://localhost:8080/queue/leave \
+	  -H "Content-Type: application/json" \
+	  --data-binary @payloads/player_leave_4.json

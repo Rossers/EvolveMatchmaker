@@ -4,7 +4,13 @@ from sqlalchemy.orm import Session
 from app import models
 from app.database import Base, engine, wait_for_database, get_db
 from app.models import QueuedPlayer
-from app.schemas import QueuedPlayerResponse, QueueJoinRequest, QueueListResponse
+from app.schemas import (
+    QueuedPlayerResponse,
+    QueueJoinRequest,
+    QueueListResponse,
+    QueueLeaveRequest,
+    QueueLeaveResponse,
+)
 
 
 app = FastAPI(title="Evolve Matchmaker API")
@@ -76,4 +82,26 @@ def get_queue(db: Session = Depends(get_db)):
     return QueueListResponse(
         hunters=hunters,
         monsters=monsters,
+    )
+
+@app.post("/queue/leave", response_model=QueueLeaveResponse)
+def leave_queue(request: QueueLeaveRequest, db: Session = Depends(get_db)):
+    queued_player = (
+        db.query(QueuedPlayer)
+        .filter(QueuedPlayer.player_id == request.player_id)
+        .first()
+    )
+
+    if not queued_player:
+        raise HTTPException(
+            status_code=404,
+            detail="player is not currently queued",
+        )
+
+    db.delete(queued_player)
+    db.commit()
+
+    return QueueLeaveResponse(
+        player_id=request.player_id,
+        removed=True,
     )

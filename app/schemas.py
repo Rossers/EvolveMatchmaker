@@ -16,3 +16,12 @@ class QueuedPlayerResponse(BaseModel):
 class QueueListResponse(BaseModel):
     hunters: list[QueuedPlayerResponse]
     monsters: list[QueuedPlayerResponse]
+
+
+class QueueLeaveRequest(BaseModel):
+    player_id: str = Field(min_length=1, max_length=64)
+
+
+class QueueLeaveResponse(BaseModel):
+    player_id: str
+    removed: bool
