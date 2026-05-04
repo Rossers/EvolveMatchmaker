@@ -3,13 +3,16 @@ from sqlalchemy.orm import Session
 
 from app import models
 from app.database import Base, engine, wait_for_database, get_db
-from app.models import QueuedPlayer
+from app.models import QueuedPlayer, Match
 from app.schemas import (
     QueuedPlayerResponse,
     QueueJoinRequest,
     QueueListResponse,
     QueueLeaveRequest,
     QueueLeaveResponse,
+    MatchResponse,
+    MatchmakingRunResponse,
+    ClearQueueResponse,
 )
 
 
@@ -104,4 +107,89 @@ def leave_queue(request: QueueLeaveRequest, db: Session = Depends(get_db)):
     return QueueLeaveResponse(
         player_id=request.player_id,
         removed=True,
+    )
+
+@app.post("/matchmaking/run", response_model=MatchmakingRunResponse)
+def run_matchmaking(db: Session = Depends(get_db)):
+    mmr_range = 300
+
+    monster = (
+        db.query(QueuedPlayer)
+        .filter(QueuedPlayer.role == "monster")
+        .order_by(QueuedPlayer.joined_at)
+        .first()
+    )
+
+    if not monster:
+        return MatchmakingRunResponse(
+            match_created=False,
+            match=None,
+            detail="no monster queued",
+        )
+
+    hunters = (
+        db.query(QueuedPlayer)
+        .filter(
+            QueuedPlayer.role == "hunter",
+            QueuedPlayer.mmr >= monster.mmr - mmr_range,
+            QueuedPlayer.mmr <= monster.mmr + mmr_range,
+        )
+        .order_by(QueuedPlayer.joined_at)
+        .limit(4)
+        .all()
+    )
+
+    eligible_hunters = len(hunters)
+
+    if eligible_hunters < 4:
+        return MatchmakingRunResponse(
+            match_created=False,
+            match=None,
+            detail="no match found",
+            monster_mmr=monster.mmr,
+            allowed_min_mmr=monster.mmr - mmr_range,
+            allowed_max_mmr=monster.mmr + mmr_range,
+            eligible_hunters=eligible_hunters,
+        )
+
+    player_mmrs = [monster.mmr] + [hunter.mmr for hunter in hunters]
+    average_mmr = round(sum(player_mmrs) / len(player_mmrs))
+
+    hunter_ids = [hunter.player_id for hunter in hunters]
+
+    match = Match(
+        monster_id=monster.player_id,
+        hunter_ids=hunter_ids,
+        average_mmr=average_mmr,
+    )
+
+    db.add(match)
+
+    for hunter in hunters:
+        db.delete(hunter)
+
+    db.delete(monster)
+
+    db.commit()
+    db.refresh(match)
+
+    return MatchmakingRunResponse(
+        match_created=True,
+        match=MatchResponse(
+            match_id=match.id,
+            monster=match.monster_id,
+            hunters=match.hunter_ids,
+            average_mmr=match.average_mmr,
+        ),
+        detail="match created",
+    )
+
+@app.delete("/dev/queue", response_model=ClearQueueResponse)
+def clear_queue(db: Session = Depends(get_db)):
+    removed_players = db.query(QueuedPlayer).delete()
+    db.commit()
+
+    return ClearQueueResponse(
+        removed_players=removed_players,
+        detail="queue cleared",
     )

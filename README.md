@@ -23,3 +23,6 @@ This project will be built with FastAPI, PostgreSQL, Docker, and pytest. It is d
 - Docker
 - Docker Compose
 - pytest
+
+## Debugging
+- `make logs`: shows python logs.
