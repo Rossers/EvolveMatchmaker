@@ -40,6 +40,9 @@ seed-match:
 clear-queue:
 	curl.exe -X DELETE http://localhost:8080/dev/queue
 
+fetch-matches:
+	curl.exe http://localhost:8080/matches
+
 join-h-1:
 	curl.exe -X POST http://localhost:8080/queue/join \
 	  -H "Content-Type: application/json" \

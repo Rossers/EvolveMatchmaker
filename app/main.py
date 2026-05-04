@@ -13,6 +13,7 @@ from app.schemas import (
     MatchResponse,
     MatchmakingRunResponse,
     ClearQueueResponse,
+    MatchHistoryResponse,
 )
 
 
@@ -87,6 +88,7 @@ def get_queue(db: Session = Depends(get_db)):
         monsters=monsters,
     )
 
+
 @app.post("/queue/leave", response_model=QueueLeaveResponse)
 def leave_queue(request: QueueLeaveRequest, db: Session = Depends(get_db)):
     queued_player = (
@@ -108,6 +110,7 @@ def leave_queue(request: QueueLeaveRequest, db: Session = Depends(get_db)):
         player_id=request.player_id,
         removed=True,
     )
+
 
 @app.post("/matchmaking/run", response_model=MatchmakingRunResponse)
 def run_matchmaking(db: Session = Depends(get_db)):
@@ -184,6 +187,7 @@ def run_matchmaking(db: Session = Depends(get_db)):
         detail="match created",
     )
 
+
 @app.delete("/dev/queue", response_model=ClearQueueResponse)
 def clear_queue(db: Session = Depends(get_db)):
     removed_players = db.query(QueuedPlayer).delete()
@@ -193,3 +197,19 @@ def clear_queue(db: Session = Depends(get_db)):
         removed_players=removed_players,
         detail="queue cleared",
     )
+
+
+@app.get("/matches", response_model=list[MatchHistoryResponse])
+def get_matches(db: Session = Depends(get_db)):
+    matches = db.query(Match).order_by(Match.created_at.desc()).all()
+
+    return [
+        MatchHistoryResponse(
+            match_id=match.id,
+            monster=match.monster_id,
+            hunters=match.hunter_ids,
+            average_mmr=match.average_mmr,
+            created_at=match.created_at,
+        )
+        for match in matches
+    ]

@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field
+from datetime import datetime
 
 
 class QueueJoinRequest(BaseModel):
@@ -46,3 +47,10 @@ class MatchmakingRunResponse(BaseModel):
 class ClearQueueResponse(BaseModel):
     removed_players: int
     detail: str
+
+class MatchHistoryResponse(BaseModel):
+    match_id: int
+    monster: str
+    hunters: list[str]
+    average_mmr: int
+    created_at: datetime
